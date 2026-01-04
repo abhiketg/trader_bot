@@ -391,6 +391,9 @@ def preprocess_acc_positions(dict_acc_positions, combine_accounts):
 
         list_positions.extend(positions['positions'])
 
+    if not list_positions:
+        return pd.DataFrame()
+
     df_positions = pd.DataFrame(list_positions)
 
     securities_cad_mask = df_positions['symbol'].str.endswith(('TO', 'VN')) & (df_positions['symbol'] != 'UCSH.U.TO')
@@ -421,13 +424,16 @@ def get_qqq_pos_and_bal(acc_no):
     dict_acc_positions = get_acc_positions(list_acc_nos=[acc_no])
     df_positions = preprocess_acc_positions(dict_acc_positions, combine_accounts=False)
 
+    if df_positions.shape[0] > 0:
+        df_sqqq = df_positions[df_positions['symbol'] == 'SQQQ']
+        df_tqqq = df_positions[df_positions['symbol'] == 'TQQQ']
+        n_sqqq = float(df_sqqq['openQuantity'].iloc[0] if len(df_sqqq) > 0 else 0)
+        n_tqqq = float(df_tqqq['openQuantity'].iloc[0] if len(df_tqqq) > 0 else 0)
+    else:
+        n_sqqq = 0
+        n_tqqq = 0
+
     df_acc_balances = pd.DataFrame(dict_acc_balances[acc_no]['perCurrencyBalances'])
     BAL_USD = float(df_acc_balances[df_acc_balances['currency'] == 'USD']['cash'].iloc[0])
-
-    df_sqqq = df_positions[df_positions['symbol'] == 'SQQQ']
-    df_tqqq = df_positions[df_positions['symbol'] == 'TQQQ']
-
-    n_sqqq = float(df_sqqq['openQuantity'].iloc[0] if len(df_sqqq) > 0 else 0)
-    n_tqqq = float(df_tqqq['openQuantity'].iloc[0] if len(df_tqqq) > 0 else 0)
 
     return BAL_USD, n_sqqq, n_tqqq
